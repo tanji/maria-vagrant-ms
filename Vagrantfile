@@ -18,20 +18,25 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   
   config.vm.define "db1" do |db1|
     db1.vm.hostname = "db1"
-    db1.vm.network "private_network", ip: "192.168.50.101"
-    db1.vm.network "forwarded_port", guest: 3306, host: 3301
+    db1.vm.network "private_network", ip: "192.168.56.111"
+    #db1.vm.network "forwarded_port", guest: 3306, host: 3301
   end
 
   config.vm.define "db2" do |db2|
     db2.vm.hostname = "db2"
-    db2.vm.network "private_network", ip: "192.168.50.102"
-    db2.vm.network "forwarded_port", guest: 3306, host: 3302
+    db2.vm.network "private_network", ip: "192.168.56.112"
+    #db2.vm.network "forwarded_port", guest: 3306, host: 3302
   end
 
   config.vm.define "db3" do |db3|
     db3.vm.hostname = "db3"
-    db3.vm.network "private_network", ip: "192.168.50.103"
-    db3.vm.network "forwarded_port", guest:3306, host: 3303	
+    db3.vm.network "private_network", ip: "192.168.56.113"
+    #db3.vm.network "forwarded_port", guest: 3306, host: 3303	
+  end
+
+  config.vm.define "maxscale" do |maxscale|
+    maxscale.vm.hostname = "maxscale"
+    maxscale.vm.network "private_network", ip: "192.168.56.114"
   end
 
   config.vm.provider "virtualbox" do |v|

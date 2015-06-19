@@ -1,0 +1,12 @@
+  - name: Install pacemaker
+    apt: name=pacemaker state=installed
+  - name: Enable corosync
+    lineinfile: dest=/etc/default/corosync regexp="^START=no" line="START=yes"
+  - name: Add corosync key
+    copy: src=files/authkey dest=/etc/corosync/authkey mode=0400
+  - name: Configure corosync bind address
+    lineinfile: 'dest=/etc/corosync/corosync.conf regexp="bindnetaddr:" line="bindnetaddr: 192.168.50.0" state=present'
+  - name: Start corosync
+    service: name=corosync state=started
+  - name: Start pacemaker
+    service: name=pacemaker state=started

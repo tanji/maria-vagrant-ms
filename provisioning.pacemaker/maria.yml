@@ -32,6 +32,8 @@
   - name: Add my ssh key
     authorized_key: user=vagrant key="{{ lookup('file', '/home/tanj/.ssh/id_dsa_manila.pub') }}"
 
+  - include: pacemaker.yml
+
 - hosts: master
   user: vagrant
   tasks:
@@ -44,6 +46,12 @@
 
   - name: Reset master binlog
     command: /usr/bin/mysql -u root -e "RESET MASTER"
+
+  - name: Disable pacemaker stonith
+    command: crm configure property stonith-enabled=false
+
+  - name: Configure pacemaker VIP
+    command: crm configure primitive res_ip ocf:heartbeat:IPaddr2 params ip="192.168.50.252" cidr_netmask="24" nic="eth1"
 
 - hosts: slaves
   user: vagrant
@@ -63,10 +71,3 @@
 
   - name: Restart mysql service
     service: name=mysql state=restarted
-
-- hosts: maxscale
-  user: vagrant
-  tasks:
-
-  - name: Install MaxScale
-    apt: name=maxscale state=installed

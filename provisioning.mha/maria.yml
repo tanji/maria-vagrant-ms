@@ -14,6 +14,9 @@
   - name: Install python module
     apt: name=python-mysqldb state=installed
 
+  - name: Install MHA node
+    apt: name=mha4mysql-node state=installed
+
   - name: Modify configuration file to listen on all interfaces
     lineinfile: dest=/etc/mysql/my.cnf regexp="^bind-address" line="bind-address=0.0.0.0"
 
@@ -68,5 +71,5 @@
   user: vagrant
   tasks:
 
-  - name: Install MaxScale
-    apt: name=maxscale state=installed
+  - name: Install MHA Manager
+    apt: name=mha4mysql-manager state=installed
