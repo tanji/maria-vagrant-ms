@@ -1,49 +1,36 @@
 - hosts: master:slaves
   user: vagrant
   tasks:
+  - name: Install SELinux dependency
+    yum: name=libselinux-python state=present
 
   - name: Install MariaDB repository
-    apt_repository: repo='deb http://ftp.igh.cnrs.fr/pub/mariadb/repo/10.0/ubuntu trusty main' state=present
-
-  - name: Add repository key to the system
-    apt_key: keyserver=keyserver.ubuntu.com id=0xcbcb082a1bb943db
+    copy: src=MariaDB.repo dest=/etc/yum.repos.d/
 
   - name: Install MariaDB Server
-    apt: name=mariadb-server state=latest update_cache=yes
+    yum: name=MariaDB-server state=latest
 
   - name: Install python module
-    apt: name=python-mysqldb state=installed
+    yum: name=MySQL-python state=present
+  
+  - name: Deploy configuration
+    template: src=ms.cnf.j2 dest=/etc/my.cnf.d/ms.cnf
 
-  - name: Modify configuration file to listen on all interfaces
-    lineinfile: dest=/etc/mysql/my.cnf regexp="^bind-address" line="bind-address=0.0.0.0"
-
-  - name: Modify innodb buffer pool size to lower value
-    lineinfile: dest=/etc/mysql/my.cnf regexp="^innodb_buffer_pool_size" line="innodb_buffer_pool_size = 128M"
-
-  - name: create replication account
-    mysql_user: name=repl host="%" password=lper priv=*.*:"replication slave" state=present
-
-  - name: create readwrite user
-    mysql_user: name=rwuser host="%" password=adminpwd priv=*.*:select,insert,update,delete,create,drop state=present
-
-  - name: create remote root user
-    mysql_user: name=root host="%" password=opopo priv=*.*:all state=present
-
-  - name: Add my ssh key
-    authorized_key: user=vagrant key="{{ lookup('file', '/home/tanj/.ssh/id_dsa_manila.pub') }}"
+  - name: And start MariaDB
+    service: name=mysql state=started
 
 - hosts: master
   user: vagrant
   tasks:
 
-  - name: Modify configuration file to setup server ID
-    lineinfile: dest=/etc/mysql/my.cnf regexp="^#server-id" line="server-id=1"
+  - name: Create replication user
+    mysql_user: name=repl host=% password=lper priv="*.*:REPLICATION SLAVE"
 
-  - name: Restart mysql service
-    service: name=mysql state=restarted
+  - name: Create superuser
+    mysql_user: name=root host=% password=admin priv=*.*:ALL state=present
 
-  - name: Reset master binlog
-    command: /usr/bin/mysql -u root -e "RESET MASTER"
+  - name: Create maxscale user
+    mysql_user: name=maxadmin host="%" password=maxpwd priv="*.*:SELECT,SHOW DATABASES,REPLICATION CLIENT" state=present
 
 - hosts: slaves
   user: vagrant
@@ -52,21 +39,8 @@
   - name: Requires mysql start
     service: name=mysql state=started
 
-  - name: Modify configuration file to setup server ID
-    lineinfile: dest=/etc/mysql/my.cnf regexp="^#server-id" line="server-id={{ server_id }}"
-
-  - name: Stop slave in case it has already been started
-    mysql_replication: mode=stopslave
-
   - name: Setup replication
-    command: /usr/bin/mysql -uroot -e "CHANGE MASTER TO master_host='192.168.50.101', master_user='repl', master_password='lper', master_use_gtid=current_pos"
+    command: /usr/bin/mysql -uroot -e "CHANGE MASTER TO master_host='192.168.56.111', master_user='repl', master_password='lper', master_use_gtid=current_pos"
 
-  - name: Restart mysql service
-    service: name=mysql state=restarted
+- include: maxscale.yml
 
-- hosts: maxscale
-  user: vagrant
-  tasks:
-
-  - name: Install MaxScale
-    apt: name=maxscale state=installed
