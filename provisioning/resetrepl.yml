@@ -1,0 +1,22 @@
+- hosts: master:slaves
+  user: vagrant
+  tasks:
+
+  - name: Stop all slave threads
+    command: /usr/bin/mysql -uroot -e "STOP SLAVE"
+
+  - name: Reset all slaves
+    command: /usr/bin/mysql -uroot -e "RESET SLAVE ALL"
+
+  - name: Reset binlogs
+    command: /usr/bin/mysql -uroot -e "RESET MASTER"
+
+- hosts: slaves
+  user: vagrant
+  tasks:
+
+  - name: Setup replication
+    command: /usr/bin/mysql -uroot -e "SET GLOBAL gtid_slave_pos='0-1-1';CHANGE MASTER TO master_host='192.168.56.111', master_user='repl', master_password='lper', master_use_gtid=slave_pos"
+
+  - name: Start slaves
+    command: /usr/bin/mysql -uroot -e "START SLAVE"
