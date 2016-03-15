@@ -1,0 +1,18 @@
+# 
+- hosts: maxscale
+  user: vagrant
+  tasks:
+  - name: install maxscale repo
+    yum: name=http://downloads.mariadb.com/enterprise/h486-18nf/generate/10.0/mariadb-enterprise-repository.rpm state=present
+
+  - name: install maxscale
+    yum: name=maxscale state=present   
+
+  - name: Install SELinux dependency
+    yum: name=libselinux-python state=present
+
+  - name: copy maxscale configuration
+    copy: src=maxscale.cnf dest=/etc/maxscale.cnf
+
+  - name: start maxscale
+    service: name=maxscale state=started
